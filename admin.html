@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحديث المنيو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rakkas&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#f5e9c8; --paper:#fbf3dd; --brown:#6b3f1d; --brown-deep:#3d2410;
+    --gold:#a9761f; --ember:#b5451c; --ink:#2b1a0d; --line:rgba(61,36,16,0.18);
+    --ok:#2e7d32; --err:#b3261e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--cream); color:var(--ink);
+    font-family:'Tajawal', sans-serif; line-height:1.6; padding-bottom:100px;
+  }
+  h1,h2,h3{ font-family:'Rakkas', serif; font-weight:400; color:var(--brown-deep); }
+  .wrap{ max-width:920px; margin:0 auto; padding:0 16px; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, textarea, select{ font-family:inherit; }
+
+  /* topbar */
+  .topbar{
+    position:sticky; top:0; z-index:50; background:var(--brown-deep); color:var(--cream);
+    padding:14px 0; box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  }
+  .topbar .wrap{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .topbar h1{ color:var(--cream); font-size:1.4rem; margin:0; }
+  .topbar .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .btn{
+    padding:10px 18px; border-radius:6px; font-weight:900; font-size:0.95rem; border:none;
+    transition:transform .15s;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn-save{ background:#e8a94c; color:#3d2410; }
+  .btn-load{ background:transparent; color:var(--cream); border:1.5px solid rgba(245,233,200,0.5); }
+  .btn-add{ background:var(--paper); color:var(--brown-deep); border:1.5px dashed var(--brown); }
+  .btn-danger{ background:transparent; color:var(--err); border:1.5px solid var(--err); }
+  .btn-small{ padding:6px 12px; font-size:0.82rem; border-radius:5px; }
+  .btn-icon{ padding:6px 10px; font-size:0.95rem; border-radius:5px; background:var(--paper); border:1px solid var(--line); color:var(--brown-deep); }
+
+  .status{ font-size:0.85rem; margin-top:6px; min-height:20px; }
+  .status.ok{ color:#bde5c0; }
+  .status.err{ color:#ffb4a8; }
+
+  /* intro */
+  .intro{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin:20px 0; }
+  .intro h2{ font-size:1.2rem; margin-bottom:8px; }
+  .intro ol{ margin:8px 18px 0 0; padding:0; color:var(--brown); font-size:0.94rem; }
+  .intro li{ margin-bottom:4px; }
+
+  /* file loader */
+  .loader-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .loader-row input[type=file]{
+    font-size:0.85rem; color:var(--cream);
+  }
+
+  /* sections */
+  .section{ background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:20px; margin:18px 0; }
+  .section h2{ font-size:1.25rem; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-weight:700; font-size:0.88rem; color:var(--brown-deep); margin-bottom:5px; }
+  .field input, .field textarea{
+    width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:6px;
+    font-size:0.95rem; background:#fff; color:var(--ink);
+  }
+  .field textarea{ resize:vertical; min-height:44px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:600px){ .field-row{ grid-template-columns:1fr; } }
+
+  /* category card */
+  .cat-card{ border:1.5px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; background:#fffdf7; }
+  .cat-head{ display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; margin-bottom:12px; }
+  .cat-head .field{ flex:1; min-width:200px; margin-bottom:0; }
+  .cat-toolbar{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .cat-type-badge{
+    display:inline-block; font-size:0.75rem; font-weight:700; color:var(--gold);
+    border:1px solid var(--gold); border-radius:999px; padding:3px 10px; white-space:nowrap;
+  }
+
+  .items-list{ margin-top:10px; }
+  .item-card{
+    border:1px dashed var(--line); border-radius:8px; padding:12px; margin-bottom:10px;
+    display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; background:#fff;
+  }
+  .item-fields{ flex:1; min-width:220px; display:grid; grid-template-columns:1fr; gap:8px; }
+  .item-fields .name-desc{ display:grid; grid-template-columns:1fr; gap:8px; }
+  .item-prices{ display:flex; gap:8px; flex-wrap:wrap; }
+  .price-field{ display:flex; flex-direction:column; gap:3px; min-width:70px; }
+  .price-field label{ font-size:0.72rem; color:var(--brown); font-weight:700; }
+  .price-field input{ width:100%; padding:7px 8px; border:1.5px solid var(--line); border-radius:5px; font-size:0.9rem; }
+  .item-actions{ display:flex; flex-direction:column; gap:6px; }
+  .photo-box{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; }
+  .photo-thumb{
+    width:64px; height:64px; border-radius:8px; background:var(--cream); border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.4rem;
+  }
+  .photo-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .photo-btns{ display:flex; flex-direction:column; gap:4px; }
+  .photo-btns button{ font-size:0.72rem !important; padding:5px 8px !important; white-space:nowrap; }
+  .small-input{ padding:7px 9px !important; font-size:0.88rem !important; }
+
+  .add-item-btn{ width:100%; margin-top:6px; }
+
+  .empty-hint{ color:var(--brown); font-size:0.88rem; text-align:center; padding:14px; }
+
+  /* new category form */
+  .new-cat-box{ border:1.5px dashed var(--brown); border-radius:10px; padding:16px; margin-top:10px; display:none; }
+  .new-cat-box.show{ display:block; }
+
+  /* toast */
+  #toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--brown-deep); color:var(--cream); padding:12px 22px; border-radius:8px;
+    font-weight:700; font-size:0.92rem; box-shadow:0 6px 20px rgba(0,0,0,0.3);
+    opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:100;
+    max-width:90vw; text-align:center;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+  #toast.err{ background:var(--err); }
+
+  .locked-msg{ text-align:center; color:var(--brown); padding:60px 16px; }
+  .locked-msg h2{ font-size:1.4rem; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <h1>🔥 لوحة تحديث المنيو</h1>
+    <div class="actions">
+      <button class="btn btn-load" id="reloadBtn">إعادة تحميل من الموقع</button>
+      <button class="btn btn-save" id="saveBtn">💾 حفظ وتنزيل الملف</button>
+    </div>
+  </div>
+  <div class="wrap"><div class="status" id="statusMsg"></div></div>
+</div>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>طريقة الاستخدام</h2>
+    <ol>
+      <li>عدّل الأسعار أو الأصناف اللي عايزها في الأقسام تحت — وتقدر تضيف صورة لكل صنف بزرار "📷 إضافة صورة".</li>
+      <li>اضغط زر <b>"💾 حفظ وتنزيل الملف"</b> فوق — هيتنزل ملف اسمه <b>menu-data.js</b>.</li>
+      <li>ادخل على لوحة تحكم الاستضافة (File Manager) وارفع الملف الجديد بدل القديم — بنفس المكان وبنفس الاسم بالظبط.</li>
+      <li>افتح الموقع وحدّث الصفحة (Refresh) عشان تشوف التعديلات.</li>
+    </ol>
+  </div>
+
+  <div id="loaderBox" class="intro" style="display:none;">
+    <h2>تحميل بيانات المنيو</h2>
+    <p style="color:var(--brown); font-size:0.9rem;">لو الصفحة مش لاقية ملف البيانات تلقائيًا، اختار ملف <b>menu-data.js</b> يدويًا:</p>
+    <div class="loader-row">
+      <input type="file" id="fileInput" accept=".js">
+    </div>
+  </div>
+
+  <div id="appContent" style="display:none;">
+
+    <div class="section" id="restaurantSection">
+      <h2>بيانات المطعم</h2>
+      <div class="field-row">
+        <div class="field"><label>اسم المطعم</label><input type="text" id="rName"></div>
+        <div class="field"><label>فيسبوك</label><input type="text" id="rFacebook" placeholder="اسم صفحة الفيسبوك"></div>
+      </div>
+      <div class="field"><label>الجملة التعريفية اللي تظهر أعلى الموقع</label><textarea id="rTagline"></textarea></div>
+      <div class="field"><label>العنوان</label><input type="text" id="rAddress"></div>
+      <div class="field-row">
+        <div class="field"><label>تليفون 1</label><input type="text" id="rPhone1" placeholder="مثال: 01204339937"></div>
+        <div class="field"><label>تليفون 2 (اختياري)</label><input type="text" id="rPhone2" placeholder="مثال: 01004382290"></div>
+      </div>
+      <h3 style="font-size:1.05rem; margin:16px 0 10px; color:var(--brown-deep);">روابط السوشيال ميديا</h3>
+      <div class="field"><label>📘 رابط الفيسبوك</label><input type="text" id="rSocialFacebook" placeholder="https://www.facebook.com/..."></div>
+      <div class="field"><label>🎵 رابط التيك توك</label><input type="text" id="rSocialTiktok" placeholder="https://www.tiktok.com/@..."></div>
+      <div class="field"><label>💬 رابط الواتساب</label><input type="text" id="rSocialWhatsapp" placeholder="https://wa.me/..."></div>
+    </div>
+
+    <div class="section" id="dealsSection">
+      <h2>🔥 العروض الخاصة <span style="font-size:0.75rem; color:var(--brown); font-weight:400;">(تظهر أعلى المنيو مباشرة)</span></h2>
+      <div id="dealsContainer"></div>
+      <button class="btn btn-add" id="addDealBtn" style="width:100%; padding:14px; margin-top:8px;">+ إضافة عرض جديد</button>
+    </div>
+
+    <div id="categoriesContainer"></div>
+
+    <button class="btn btn-add" id="showNewCatBtn" style="width:100%; padding:16px;">+ إضافة قسم جديد للمنيو</button>
+
+    <div class="new-cat-box" id="newCatBox">
+      <h3 style="font-size:1.1rem; margin-bottom:10px;">قسم جديد</h3>
+      <div class="field"><label>اسم القسم (مثال: المشروبات)</label><input type="text" id="newCatTitle"></div>
+      <div class="field"><label>ملاحظة تظهر أعلى القسم (اختياري)</label><input type="text" id="newCatNote" placeholder="مثال: تُقدَّم مع عيش وسلطة"></div>
+      <div class="field">
+        <label>نوع عرض الأسعار</label>
+        <select id="newCatType" style="width:100%; padding:10px; border:1.5px solid var(--line); border-radius:6px;">
+          <option value="simple">قائمة عادية — صنف وسعر واحد</option>
+          <option value="tiered">أحجام متعددة — مثل (وسط / كبير) أو (ربع / نص / كيلو)</option>
+          <option value="trays">صواني / وجبات مناسبات — بها وصف وعدد أفراد</option>
+        </select>
+      </div>
+      <div class="field" id="newCatColumnsField" style="display:none;">
+        <label>أسماء الأحجام مفصولة بفاصلة (مثال: وسط, كبير)</label>
+        <input type="text" id="newCatColumns" placeholder="وسط, كبير">
+      </div>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn btn-save" id="confirmNewCatBtn">إضافة القسم</button>
+        <button class="btn btn-icon" id="cancelNewCatBtn">إلغاء</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  var state = null; // holds the working data object
+  var appEl = document.getElementById('appContent');
+  var loaderBox = document.getElementById('loaderBox');
+  var catsContainer = document.getElementById('categoriesContainer');
+  var statusMsg = document.getElementById('statusMsg');
+
+  // resize/compress an uploaded photo so menu-data.js stays small and the site stays fast
+  function compressImage(dataUrl, callback){
+    var img = new Image();
+    img.onload = function(){
+      var maxDim = 1000;
+      var w = img.width, h = img.height;
+      if(w > h && w > maxDim){ h = Math.round(h * (maxDim / w)); w = maxDim; }
+      else if(h >= w && h > maxDim){ w = Math.round(w * (maxDim / h)); h = maxDim; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      try{
+        callback(canvas.toDataURL('image/jpeg', 0.78));
+      }catch(e){
+        callback(dataUrl); // fallback: use original if canvas export fails
+      }
+    };
+    img.onerror = function(){ callback(dataUrl); };
+    img.src = dataUrl;
+  }
+
+  function toast(msg, isErr){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = isErr ? 'err show' : 'show';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function(){ t.className = t.className.replace('show',''); }, 3200);
+  }
+
+  function setStatus(msg, kind){
+    statusMsg.textContent = msg || '';
+    statusMsg.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  // ---------- parsing / serializing menu-data.js ----------
+  function parseMenuDataJs(text){
+    var m = text.match(/const\s+MENU_DATA\s*=\s*([\s\S]*?);\s*$/m);
+    var jsonPart = m ? m[1] : text;
+    return JSON.parse(jsonPart);
+  }
+  function serializeMenuDataJs(obj){
+    var header = "/*\n  ============================================================\n" +
+      "  ملف بيانات المطعم والمنيو\n" +
+      "  ============================================================\n" +
+      "  ملحوظة مهمة: من الأفضل عدم تعديل هذا الملف يدويًا.\n" +
+      "  استخدم أداة \"admin.html\" لتعديل المنيو والأسعار، ثم اضغط\n" +
+      "  \"حفظ وتنزيل\" لتحميل نسخة جديدة من هذا الملف، وارفعها بدل\n" +
+      "  القديمة على نفس المكان في الاستضافة.\n" +
+      "  ============================================================\n*/\n";
+    return header + "const MENU_DATA = " + JSON.stringify(obj, null, 2) + ";\n";
+  }
+
+  // ---------- loading ----------
+  function tryAutoLoad(){
+    setStatus('جاري تحميل بيانات المنيو الحالية…');
+    fetch('menu-data.js', {cache:'no-store'})
+      .then(function(res){
+        if(!res.ok) throw new Error('not found');
+        return res.text();
+      })
+      .then(function(text){
+        loadFromText(text);
+        setStatus('تم تحميل البيانات الحالية بنجاح ✓', 'ok');
+      })
+      .catch(function(){
+        setStatus('تعذر التحميل التلقائي — من فضلك اختر الملف يدويًا تحت.', 'err');
+        loaderBox.style.display = 'block';
+      });
+  }
+
+  function loadFromText(text){
+    try{
+      var obj = parseMenuDataJs(text);
+      if(!obj || typeof obj !== 'object') throw new Error('bad structure');
+      obj.restaurant = obj.restaurant || {};
+      obj.categories = Array.isArray(obj.categories) ? obj.categories : [];
+      obj.deals = Array.isArray(obj.deals) ? obj.deals : [];
+      state = obj;
+      renderAll();
+      appEl.style.display = 'block';
+      loaderBox.style.display = 'none';
+    }catch(e){
+      setStatus('حصل خطأ في قراءة الملف. تأكد إنه ملف menu-data.js صحيح.', 'err');
+      loaderBox.style.display = 'block';
+    }
+  }
+
+  document.getElementById('fileInput').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      loadFromText(ev.target.result);
+      setStatus('تم تحميل الملف المختار بنجاح ✓', 'ok');
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('reloadBtn').addEventListener('click', function(){
+    if(!confirm('هيتم إلغاء أي تعديلات لم يتم حفظها. متأكد؟')) return;
+    appEl.style.display = 'none';
+    tryAutoLoad();
+  });
+
+  // ---------- rendering ----------
+  function renderAll(){
+    document.getElementById('rName').value = state.restaurant.name || '';
+    document.getElementById('rFacebook').value = state.restaurant.facebook || '';
+    document.getElementById('rTagline').value = state.restaurant.tagline || '';
+    document.getElementById('rAddress').value = state.restaurant.address || '';
+    document.getElementById('rPhone1').value = state.restaurant.phone1 || '';
+    document.getElementById('rPhone2').value = state.restaurant.phone2 || '';
+    if(!state.restaurant.social) state.restaurant.social = {};
+    document.getElementById('rSocialFacebook').value = state.restaurant.social.facebook || '';
+    document.getElementById('rSocialTiktok').value = state.restaurant.social.tiktok || '';
+    document.getElementById('rSocialWhatsapp').value = state.restaurant.social.whatsapp || '';
+
+    catsContainer.innerHTML = '';
+    state.categories.forEach(function(cat, ci){
+      catsContainer.appendChild(buildCategoryCard(cat, ci));
+    });
+
+    if(!Array.isArray(state.deals)) state.deals = [];
+    var dealsContainer = document.getElementById('dealsContainer');
+    dealsContainer.innerHTML = '';
+    if(state.deals.length === 0){
+      var hint = document.createElement('div');
+      hint.className = 'empty-hint';
+      hint.textContent = 'لا يوجد عروض حاليًا. اضغط "+ إضافة عرض جديد" لإضافة أول عرض.';
+      dealsContainer.appendChild(hint);
+    }
+    state.deals.forEach(function(deal, di){
+      dealsContainer.appendChild(buildDealCard(deal, di));
+    });
+  }
+
+  function buildDealCard(deal, di){
+    var wrap = document.createElement('div');
+    wrap.className = 'item-card';
+
+    var photoBox = document.createElement('div');
+    photoBox.className = 'photo-box';
+    var thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    thumb.innerHTML = deal.image ? '<img src="' + deal.image + '" alt="">' : '🔥';
+    photoBox.appendChild(thumb);
+
+    var photoBtns = document.createElement('div');
+    photoBtns.className = 'photo-btns';
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    fileInput.addEventListener('change', function(e){
+      var file = e.target.files[0];
+      if(!file) return;
+      if(file.size > 3.5 * 1024 * 1024){
+        toast('الصورة كبيرة جدًا (أكبر من 3.5 ميجا) — استخدم صورة أصغر', true);
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        compressImage(ev.target.result, function(dataUrl){
+          deal.image = dataUrl;
+          toast('تمت إضافة صورة العرض');
+          renderAll();
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+    var addPhotoBtn = mkBtn('📷 ' + (deal.image ? 'تغيير الصورة' : 'إضافة صورة'), 'btn-icon btn-small', function(){ fileInput.click(); });
+    var delPhotoBtn = mkBtn('حذف الصورة', 'btn-danger btn-small', function(){ deal.image = ''; renderAll(); });
+    delPhotoBtn.style.display = deal.image ? 'inline-block' : 'none';
+    photoBtns.appendChild(addPhotoBtn);
+    photoBtns.appendChild(delPhotoBtn);
+    photoBtns.appendChild(fileInput);
+    photoBox.appendChild(photoBtns);
+    wrap.appendChild(photoBox);
+
+    var fields = document.createElement('div');
+    fields.className = 'item-fields';
+
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.placeholder = 'اسم العرض (مثال: عرض نص فرخة)';
+    nameInput.value = deal.name || '';
+    nameInput.addEventListener('input', function(){ deal.name = nameInput.value; });
+    fields.appendChild(nameInput);
+
+    var pricesWrap = document.createElement('div');
+    pricesWrap.className = 'item-prices';
+
+    var pfOld = document.createElement('div');
+    pfOld.className = 'price-field';
+    pfOld.innerHTML = '<label>السعر قبل</label>';
+    var inpOld = document.createElement('input');
+    inpOld.type = 'number';
+    inpOld.value = (deal.oldPrice === undefined || deal.oldPrice === null) ? '' : deal.oldPrice;
+    inpOld.placeholder = '—';
+    inpOld.addEventListener('input', function(){ deal.oldPrice = inpOld.value === '' ? null : Number(inpOld.value); });
+    pfOld.appendChild(inpOld);
+    pricesWrap.appendChild(pfOld);
+
+    var pfNew = document.createElement('div');
+    pfNew.className = 'price-field';
+    pfNew.innerHTML = '<label>السعر الحالي</label>';
+    var inpNew = document.createElement('input');
+    inpNew.type = 'number';
+    inpNew.value = (deal.newPrice === undefined || deal.newPrice === null) ? '' : deal.newPrice;
+    inpNew.addEventListener('input', function(){ deal.newPrice = inpNew.value === '' ? 0 : Number(inpNew.value); });
+    pfNew.appendChild(inpNew);
+    pricesWrap.appendChild(pfNew);
+
+    fields.appendChild(pricesWrap);
+    wrap.appendChild(fields);
+
+    var actions = document.createElement('div');
+    actions.className = 'item-actions';
+    var upBtn = mkBtn('▲', 'btn-icon btn-small', function(){ moveDeal(di, -1); });
+    var downBtn = mkBtn('▼', 'btn-icon btn-small', function(){ moveDeal(di, 1); });
+    var delBtn = mkBtn('حذف', 'btn-danger btn-small', function(){
+      state.deals.splice(di, 1);
+      renderAll();
+    });
+    actions.appendChild(upBtn);
+    actions.appendChild(downBtn);
+    actions.appendChild(delBtn);
+    wrap.appendChild(actions);
+
+    return wrap;
+  }
+
+  function moveDeal(di, dir){
+    var newIndex = di + dir;
+    if(newIndex < 0 || newIndex >= state.deals.length) return;
+    var tmp = state.deals[di];
+    state.deals[di] = state.deals[newIndex];
+    state.deals[newIndex] = tmp;
+    renderAll();
+  }
+
+  function typeLabel(type){
+    if(type === 'tiered') return 'أحجام متعددة';
+    if(type === 'trays') return 'صواني / مناسبات';
+    return 'قائمة عادية';
+  }
+
+  function buildCategoryCard(cat, ci){
+    var card = document.createElement('div');
+    card.className = 'cat-card';
+
+    var head = document.createElement('div');
+    head.className = 'cat-head';
+
+    var titleField = document.createElement('div');
+    titleField.className = 'field';
+    titleField.innerHTML = '<label>اسم القسم</label>';
+    var titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.value = cat.title || '';
+    titleInput.addEventListener('input', function(){ cat.title = titleInput.value; });
+    titleField.appendChild(titleInput);
+
+    var noteField = document.createElement('div');
+    noteField.className = 'field';
+    noteField.innerHTML = '<label>ملاحظة أعلى القسم (اختياري)</label>';
+    var noteInput = document.createElement('input');
+    noteInput.type = 'text';
+    noteInput.value = cat.note || '';
+    noteInput.addEventListener('input', function(){ cat.note = noteInput.value; });
+    noteField.appendChild(noteInput);
+
+    head.appendChild(titleField);
+    head.appendChild(noteField);
+
+    var toolbar = document.createElement('div');
+    toolbar.className = 'cat-toolbar';
+    var badge = document.createElement('span');
+    badge.className = 'cat-type-badge';
+    badge.textContent = typeLabel(cat.type);
+    toolbar.appendChild(badge);
+
+    var upBtn = mkBtn('▲', 'btn-icon btn-small', function(){ moveCat(ci, -1); });
+    var downBtn = mkBtn('▼', 'btn-icon btn-small', function(){ moveCat(ci, 1); });
+    var delBtn = mkBtn('حذف القسم', 'btn-danger btn-small', function(){
+      if(confirm('حذف قسم "' + (cat.title || '') + '" بالكامل؟ لا يمكن التراجع بعد الحفظ.')){
+        state.categories.splice(ci, 1);
+        renderAll();
+        toast('تم حذف القسم');
+      }
+    });
+    toolbar.appendChild(upBtn);
+    toolbar.appendChild(downBtn);
+    toolbar.appendChild(delBtn);
+    head.appendChild(toolbar);
+
+    card.appendChild(head);
+
+    var itemsList = document.createElement('div');
+    itemsList.className = 'items-list';
+    var items = Array.isArray(cat.items) ? cat.items : (cat.items = []);
+
+    if(items.length === 0){
+      var hint = document.createElement('div');
+      hint.className = 'empty-hint';
+      hint.textContent = 'لا يوجد أصناف في هذا القسم بعد.';
+      itemsList.appendChild(hint);
+    }
+
+    items.forEach(function(it, ii){
+      itemsList.appendChild(buildItemCard(cat, it, ii));
+    });
+
+    card.appendChild(itemsList);
+
+    var addItemBtn = mkBtn('+ إضافة صنف', 'btn-add add-item-btn', function(){
+      var newItem = { name: '' };
+      if(cat.type === 'tiered'){
+        newItem.prices = (cat.columns || []).map(function(){ return 0; });
+      } else if(cat.type === 'trays'){
+        newItem.serves = '';
+        newItem.desc = '';
+        newItem.price = 0;
+      } else {
+        newItem.desc = '';
+        newItem.price = 0;
+      }
+      items.push(newItem);
+      renderAll();
+    });
+    card.appendChild(addItemBtn);
+
+    return card;
+  }
+
+  function buildItemCard(cat, it, ii){
+    var wrap = document.createElement('div');
+    wrap.className = 'item-card';
+
+    // ---- photo ----
+    var photoBox = document.createElement('div');
+    photoBox.className = 'photo-box';
+    var thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    function refreshThumb(){
+      thumb.innerHTML = it.image ? '<img src="' + it.image + '" alt="">' : '📷';
+    }
+    refreshThumb();
+    photoBox.appendChild(thumb);
+
+    var photoBtns = document.createElement('div');
+    photoBtns.className = 'photo-btns';
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    fileInput.addEventListener('change', function(e){
+      var file = e.target.files[0];
+      if(!file) return;
+      if(file.size > 3.5 * 1024 * 1024){
+        toast('الصورة كبيرة جدًا (أكبر من 3.5 ميجا) — استخدم صورة أصغر', true);
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        compressImage(ev.target.result, function(dataUrl){
+          it.image = dataUrl;
+          toast('تمت إضافة الصورة');
+          renderAll();
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+    var addPhotoBtn = mkBtn('📷 ' + (it.image ? 'تغيير الصورة' : 'إضافة صورة'), 'btn-icon btn-small', function(){
+      fileInput.click();
+    });
+    var delBtn = mkBtn('حذف الصورة', 'btn-danger btn-small', function(){
+      it.image = '';
+      renderAll();
+    });
+    delBtn.style.display = it.image ? 'inline-block' : 'none';
+    photoBtns.appendChild(addPhotoBtn);
+    photoBtns.appendChild(delBtn);
+    photoBtns.appendChild(fileInput);
+    photoBox.appendChild(photoBtns);
+    wrap.appendChild(photoBox);
+
+    var fields = document.createElement('div');
+    fields.className = 'item-fields';
+
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.placeholder = 'اسم الصنف';
+    nameInput.value = it.name || '';
+    nameInput.addEventListener('input', function(){ it.name = nameInput.value; });
+    fields.appendChild(nameInput);
+
+    if(cat.type === 'trays'){
+      var servesInput = document.createElement('input');
+      servesInput.type = 'text';
+      servesInput.className = 'small-input';
+      servesInput.placeholder = 'تكفي كام فرد (مثال: ٣-٥ أفراد)';
+      servesInput.value = it.serves || '';
+      servesInput.addEventListener('input', function(){ it.serves = servesInput.value; });
+      fields.appendChild(servesInput);
+    }
+
+    if(cat.type === 'simple' || cat.type === 'trays'){
+      var descInput = document.createElement('textarea');
+      descInput.className = 'small-input';
+      descInput.placeholder = 'وصف الصنف (اختياري)';
+      descInput.value = it.desc || '';
+      descInput.addEventListener('input', function(){ it.desc = descInput.value; });
+      fields.appendChild(descInput);
+    }
+
+    var pricesWrap = document.createElement('div');
+    pricesWrap.className = 'item-prices';
+
+    if(cat.type === 'tiered'){
+      var columns = Array.isArray(cat.columns) ? cat.columns : [];
+      if(!Array.isArray(it.prices)) it.prices = [];
+      columns.forEach(function(label, ci2){
+        var pf = document.createElement('div');
+        pf.className = 'price-field';
+        var lbl = document.createElement('label');
+        lbl.textContent = label;
+        var inp = document.createElement('input');
+        inp.type = 'number';
+        inp.value = (it.prices[ci2] === null || it.prices[ci2] === undefined) ? '' : it.prices[ci2];
+        inp.placeholder = '—';
+        inp.addEventListener('input', function(){
+          it.prices[ci2] = inp.value === '' ? null : Number(inp.value);
+        });
+        pf.appendChild(lbl);
+        pf.appendChild(inp);
+        pricesWrap.appendChild(pf);
+      });
+    } else {
+      var pf2 = document.createElement('div');
+      pf2.className = 'price-field';
+      var lbl2 = document.createElement('label');
+      lbl2.textContent = 'السعر';
+      var inp2 = document.createElement('input');
+      inp2.type = 'number';
+      inp2.value = (it.price === undefined || it.price === null) ? '' : it.price;
+      inp2.addEventListener('input', function(){ it.price = inp2.value === '' ? 0 : Number(inp2.value); });
+      pf2.appendChild(lbl2);
+      pf2.appendChild(inp2);
+      pricesWrap.appendChild(pf2);
+    }
+    fields.appendChild(pricesWrap);
+    wrap.appendChild(fields);
+
+    var actions = document.createElement('div');
+    actions.className = 'item-actions';
+    var upI = mkBtn('▲', 'btn-icon btn-small', function(){ moveItem(cat, ii, -1); });
+    var downI = mkBtn('▼', 'btn-icon btn-small', function(){ moveItem(cat, ii, 1); });
+    var delI = mkBtn('حذف', 'btn-danger btn-small', function(){
+      cat.items.splice(ii, 1);
+      renderAll();
+    });
+    actions.appendChild(upI);
+    actions.appendChild(downI);
+    actions.appendChild(delI);
+    wrap.appendChild(actions);
+
+    return wrap;
+  }
+
+  function mkBtn(text, cls, onClick){
+    var b = document.createElement('button');
+    b.className = 'btn ' + cls;
+    b.textContent = text;
+    b.type = 'button';
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function moveCat(ci, dir){
+    var newIndex = ci + dir;
+    if(newIndex < 0 || newIndex >= state.categories.length) return;
+    var tmp = state.categories[ci];
+    state.categories[ci] = state.categories[newIndex];
+    state.categories[newIndex] = tmp;
+    renderAll();
+  }
+
+  function moveItem(cat, ii, dir){
+    var newIndex = ii + dir;
+    if(newIndex < 0 || newIndex >= cat.items.length) return;
+    var tmp = cat.items[ii];
+    cat.items[ii] = cat.items[newIndex];
+    cat.items[newIndex] = tmp;
+    renderAll();
+  }
+
+  // ---------- new category ----------
+  var newCatBox = document.getElementById('newCatBox');
+  document.getElementById('addDealBtn').addEventListener('click', function(){
+    if(!state) return;
+    if(!Array.isArray(state.deals)) state.deals = [];
+    state.deals.push({ name: '', image: '', oldPrice: null, newPrice: 0 });
+    renderAll();
+    toast('تمت إضافة عرض جديد — املأ بياناته تحت');
+  });
+
+  document.getElementById('showNewCatBtn').addEventListener('click', function(){
+    newCatBox.classList.add('show');
+    newCatBox.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+  document.getElementById('cancelNewCatBtn').addEventListener('click', function(){
+    newCatBox.classList.remove('show');
+    document.getElementById('newCatTitle').value = '';
+    document.getElementById('newCatNote').value = '';
+    document.getElementById('newCatColumns').value = '';
+  });
+  document.getElementById('newCatType').addEventListener('change', function(){
+    document.getElementById('newCatColumnsField').style.display = this.value === 'tiered' ? 'block' : 'none';
+  });
+  document.getElementById('confirmNewCatBtn').addEventListener('click', function(){
+    var title = document.getElementById('newCatTitle').value.trim();
+    if(!title){ toast('اكتب اسم القسم أولًا', true); return; }
+    var type = document.getElementById('newCatType').value;
+    var note = document.getElementById('newCatNote').value.trim();
+    var id = 'cat_' + Date.now();
+    var newCat = { id: id, title: title, type: type, note: note, items: [] };
+    if(type === 'tiered'){
+      var colsRaw = document.getElementById('newCatColumns').value.trim();
+      var cols = colsRaw ? colsRaw.split(',').map(function(s){ return s.trim(); }).filter(Boolean) : ['السعر'];
+      newCat.columns = cols;
+    }
+    state.categories.push(newCat);
+    document.getElementById('newCatTitle').value = '';
+    document.getElementById('newCatNote').value = '';
+    document.getElementById('newCatColumns').value = '';
+    newCatBox.classList.remove('show');
+    renderAll();
+    toast('تمت إضافة القسم — دلوقتي ضيف الأصناف جواه');
+  });
+
+  // ---------- save restaurant info bindings ----------
+  ['rName','rFacebook','rTagline','rAddress','rPhone1','rPhone2'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){
+      if(!state) return;
+      var map = { rName:'name', rFacebook:'facebook', rTagline:'tagline', rAddress:'address', rPhone1:'phone1', rPhone2:'phone2' };
+      state.restaurant[map[id]] = this.value;
+    });
+  });
+  ['rSocialFacebook','rSocialTiktok','rSocialWhatsapp'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){
+      if(!state) return;
+      if(!state.restaurant.social) state.restaurant.social = {};
+      var map = { rSocialFacebook:'facebook', rSocialTiktok:'tiktok', rSocialWhatsapp:'whatsapp' };
+      state.restaurant.social[map[id]] = this.value;
+    });
+  });
+
+  // ---------- save & download ----------
+  document.getElementById('saveBtn').addEventListener('click', function(){
+    if(!state){ toast('لا يوجد بيانات لحفظها', true); return; }
+    try{
+      var text = serializeMenuDataJs(state);
+      var blob = new Blob([text], {type:'text/javascript;charset=utf-8'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'menu-data.js';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      toast('تم تنزيل الملف — دلوقتي ارفعه على الاستضافة بدل الملف القديم');
+    }catch(e){
+      toast('حصل خطأ أثناء الحفظ: ' + e.message, true);
+    }
+  });
+
+  // ---------- start ----------
+  tryAutoLoad();
+})();
+</script>
+
+</body>
+</html>
